@@ -1,779 +1,1004 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Minecraft Clicker</title>
-<style>
-  /* ---------- Estilos (mantidos + leves ajustes) ---------- */
-  :root{
-    --bg:#0f1412; --panel:#131816; --panel-2:#0b0f0e;
-    --accent:#1db084; --accent-strong:#15a274;
-    --text:#e9fbf5; --muted:#9fb7b1;
-    --license-bg: linear-gradient(90deg,#ffd86b,#ffb64b);
-    --glass: rgba(255,255,255,0.03);
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#08100f);color:var(--text);-webkit-font-smoothing:antialiased;user-select:none}
-  header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
-  .title{font-weight:800}
-  .nav{display:flex;gap:8px;align-items:center}
-  button{appearance:none;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
-  .btn-accent{background:linear-gradient(180deg,var(--accent-strong),var(--accent));border-color:rgba(0,0,0,0.2);color:#042018}
-  .container{max-width:1100px;margin:18px auto;padding:0 14px}
-  .layout{display:grid;grid-template-columns:340px 1fr;gap:18px}
-  @media (max-width:900px){.layout{grid-template-columns:1fr}}
-  .panel{background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
-  h2{margin:0 0 8px 0}
-  .sub{color:var(--muted);font-size:13px;margin-bottom:8px}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-  .stat{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center}
-  .label{font-size:12px;color:var(--muted)}
-  .val{font-weight:800;font-size:18px}
-  .center{display:flex;flex-direction:column;align-items:center}
-  #block{width:300px;height:300px;border-radius:12px;border:4px solid rgba(0,0,0,0.3);background-size:cover;background-position:center;margin:10px 0;position:relative;overflow:hidden;cursor:pointer;-webkit-user-select:none;user-select:none}
-  .hp-bar{width:300px;height:12px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-  .hp-fill{height:100%;background:linear-gradient(90deg,#2ee1b0,#89f2ff);width:100%}
-  .particle{position:absolute;font-weight:900;text-shadow:0 1px 0 #000;animation:rise .9s ease-out forwards;user-select:none;-webkit-user-select:none}
-  @keyframes rise{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-60px)}}
-  .tabs{display:flex;gap:8px;margin-top:12px;margin-bottom:8px;flex-wrap:wrap}
-  .tab{padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.02);cursor:pointer}
-  .tab.active{background:linear-gradient(180deg, rgba(0,0,0,0.2), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.02)}
-  .shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  @media (max-width:700px){.shop-grid{grid-template-columns:1fr}}
-  .shop-item{background:rgba(0,0,0,0.15);padding:10px;border-radius:10px;display:flex;gap:10px;align-items:center}
-  .icon{width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,0.03);display:grid;place-items:center;font-weight:900}
-  .inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
-  .inv-item{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center;cursor:grab;border:1px solid rgba(255,255,255,0.02);user-select:none;position:relative}
-  .inv-item img{width:40px;height:40px;display:block;margin:0 auto 4px;pointer-events:none}
-  .inv-qty{font-size:12px;color:var(--muted);position:absolute;right:8px;bottom:6px;background:rgba(0,0,0,0.2);padding:2px 6px;border-radius:6px}
-  .crafting-area{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
-  .craft-grid{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px}
-  .slot{width:56px;height:56px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center;border:2px dashed rgba(255,255,255,0.03);font-size:14px;user-select:none;position:relative}
-  .slot.over{border-color:var(--accent)}
-  .craft-result{display:flex;flex-direction:column;align-items:center;gap:6px}
-  #craftBtn{background:var(--accent);border:none;color:#042018;padding:8px 12px;border-radius:8px;cursor:pointer}
-  #craftBtn:disabled{opacity:0.5;cursor:not-allowed}
-  .chest{position:absolute;width:70px;height:70px;border-radius:10px;background-size:cover;display:grid;place-items:center;font-weight:900;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.5);user-select:none}
-  .pill{background:rgba(0,0,0,0.15);padding:4px 8px;border-radius:999px;font-size:12px}
-  .badge-owned{background:#154f37;color:#b5ffe7;padding:6px 8px;border-radius:8px;font-weight:800}
-  .badge-buy{background:#2b3940;color:#fff;padding:6px 8px;border-radius:8px;cursor:pointer}
-  .layer-select{display:flex;gap:6px;margin-top:10px}
-  .layer-btn{padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:rgba(255,255,255,0.02)}
-  .layer-btn.active{background:linear-gradient(90deg,#333,#222);border:1px solid rgba(255,255,255,0.06)}
-  .toast{position:fixed;right:18px;bottom:18px;background:rgba(0,0,0,0.6);color:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.6);z-index:9999}
-  .license-toast{position:fixed;right:18px;bottom:90px;background:var(--license-bg);color:#111;padding:12px 16px;border-radius:12px;font-weight:800;box-shadow:0 8px 30px rgba(0,0,0,0.6);z-index:10000;transform-origin:right bottom;animation:pop .35s ease;}
-  @keyframes pop{0%{transform:scale(0.7);opacity:0}100%{transform:scale(1);opacity:1}}
-  #furnacePanel{position:fixed;left:18px;bottom:18px;background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);z-index:999;display:none}
-  .furnace-slot{width:64px;height:64px;border-radius:8px;background:rgba(255,255,255,0.02);display:grid;place-items:center;border:2px dashed rgba(255,255,255,0.03);margin:6px;user-select:none;position:relative}
-  .progress-bar{width:200px;height:12px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-  .progress-fill{height:100%;background:linear-gradient(90deg,#ffb16b,#ff7a3c);width:0%}
-  .stack-count{position:absolute;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:6px;font-size:12px;bottom:4px;right:4px}
-  .nether body, .nether .panel{--panel:#3a0e0e;--panel-2:#2e0b07;--accent:#ff8a6b;--accent-strong:#ff5936}
-  .nether #block{border-color:#5a0c0c}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Minecraft Clicker</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-
-<header>
-  <div class="title">⛏ Minecraft Clicker </div>
-  <div class="nav">
-    <button id="btnSave" class="btn">💾 Salvar</button>
-    <button id="btnReset" class="btn">♻ Reset</button>
-  </div>
-</header>
-
-<main class="container">
-  <div class="layout">
-    <!-- painel do jogo -->
-    <section class="panel" id="gamePanel">
-      <h2>Mina</h2>
-      <div class="sub">Clique no bloco para minerar — arraste as imagens do inventário para o crafting/fornalha.</div>
-
-      <div class="center">
-        <div id="block" title="Clique para minerar"></div>
-        <div class="hp-bar" style="margin-top:8px"><div id="hpFill" class="hp-fill"></div></div>
-        <div style="height:8px"></div>
-      </div>
-
-      <div class="stats" style="margin-top:12px">
-        <div class="stat"><div class="label">Cliques</div><div id="statClicks" class="val">0</div></div>
-        <div class="stat"><div class="label">Moedas</div><div id="statCoins" class="val">0</div></div>
-        <div class="stat"><div class="label">Hits</div><div id="statHits" class="val">—</div></div>
-      </div>
-
-      <!-- Crafting -->
-      <div style="margin-top:14px">
-        <h3>Crafting (3×3)</h3>
-        <div class="crafting-area">
-          <div>
-            <div class="craft-grid" id="craftGrid"></div>
+  <header>
+    <div class="title">⛏ Minecraft Clicker </div>
+    <div class="nav">
+      <button id="btnSave" class="btn">💾 Salvar</button>
+      <button id="btnReset" class="btn">♻ Reset</button>
+    </div>
+  </header>
+  <main class="container">
+    <div class="layout">
+      <!-- painel do jogo -->
+      <section class="panel" id="gamePanel">
+        <h2>Mina</h2>
+        <div class="sub">Clique no bloco para minerar — arraste as imagens do inventário para o crafting/fornalha.</div>
+        <div class="center">
+          <div id="block" title="Clique para minerar"></div>
+          <div class="hp-bar" style="margin-top:8px">
+            <div id="hpFill" class="hp-fill"></div>
           </div>
-          <div class="craft-result">
-            <div style="font-size:13px;color:var(--muted)">Resultado</div>
-            <div id="craftPreview" style="width:80px;height:80px;border-radius:10px;background:rgba(255,255,255,0.02);display:grid;place-items:center">—</div>
-            <button id="craftBtn" disabled>Craftar</button>
-            <div style="margin-top:8px;color:var(--muted);font-size:12px">* Ferro/Ouro/Netherite precisam estar em ingots (fornalha).</div>
+          <div style="height:8px"></div>
+        </div>
+        <div class="stats" style="margin-top:12px">
+          <div class="stat">
+            <div class="label">Cliques</div>
+            <div id="statClicks" class="val">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Moedas</div>
+            <div id="statCoins" class="val">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Hits</div>
+            <div id="statHits" class="val">—</div>
           </div>
         </div>
+        <!-- Crafting -->
+        <div style="margin-top:14px">
+          <h3>Crafting (3×3)</h3>
+          <div class="crafting-area">
+            <div>
+              <div class="craft-grid" id="craftGrid"></div>
+            </div>
+            <div class="craft-result">
+              <div style="font-size:13px;color:var(--muted)">Resultado</div>
+              <div id="craftPreview" style="width:80px;height:80px;border-radius:10px;background:rgba(255,255,255,0.02);display:grid;place-items:center">—</div>
+              <button id="craftBtn" disabled>Craftar</button>
+              <div style="margin-top:8px;color:var(--muted);font-size:12px">* Ferro/Ouro/Netherite precisam estar em ingots (fornalha).</div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- HUD / inventário -->
+      <aside class="panel" id="hudPanel">
+        <h3>Status</h3>
+        <div class="sub">Picareta, fortuna, velocidade e camadas.</div>
+        <div class="chips" style="margin:8px 0">
+          <span class="pill" id="pickaxeLabel">Picareta: Madeira</span>
+          <span class="pill" id="fortuneLabel">Fortuna: 0%</span>
+          <span class="pill" id="speedLabel">Velocidade: x1.00</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-direction:column">
+          <div style="display:flex;gap:8px">
+            <button id="openShop" class="btn">Loja</button>
+            <button id="openFurnace" class="btn">Fornalha</button>
+          </div>
+          <div style="margin-top:10px">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Escolha a camada</div>
+            <div class="layer-select" id="layerSelect">
+              <button class="layer-btn" data-layer="surface" title="Superfície (50→35): Pedra, Carvão, Ferro predominam">Superfície</button>
+              <button class="layer-btn" data-layer="mid" title="Médio (30→10): Ouro, Diamante, Esmeralda, Lava e Obsidian">Médio</button>
+              <button class="layer-btn" data-layer="deep" title="Profundo (0→-20): Mais resistente; +5% diam/obsidian">Profundo</button>
+            </div>
+          </div>
+        </div>
+        <h4 style="margin-top:12px">Inventário</h4>
+        <div class="sub">Arraste as imagens para crafting ou fornalha.</div>
+        <div id="invGrid" class="inv-grid" style="margin-top:8px"></div>
+        <div style="margin-top:12px">
+          <button id="buySticks" class="btn">Comprar Graveto (5⛃ → 4x)</button>
+        </div>
+      </aside>
+    </div>
+    <!-- Loja -->
+    <section class="panel" id="shopPanel" style="margin-top:14px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h2>Loja & Receitas</h2>
+        <div>
+          <button id="shopToGame" class="btn">Voltar</button>
+        </div>
       </div>
+      <div class="tabs" id="shopTabs" style="margin-top:12px">
+        <div class="tab active" data-tab="licenses">Licenças</div>
+        <div class="tab" data-tab="recipes">Receitas</div>
+        <div class="tab" data-tab="inventory">Inventário</div>
+      </div>
+      <div id="shopContent" style="margin-top:12px"></div>
     </section>
-
-    <!-- HUD / inventário -->
-    <aside class="panel" id="hudPanel">
-      <h3>Status</h3>
-      <div class="sub">Picareta, fortuna, velocidade e camadas.</div>
-
-      <div class="chips" style="margin:8px 0">
-        <span class="pill" id="pickaxeLabel">Picareta: Madeira</span>
-        <span class="pill" id="fortuneLabel">Fortuna: 0%</span>
-        <span class="pill" id="speedLabel">Velocidade: x1.00</span>
-        <span class="pill" id="netherLabel">Nether: ❌</span>
+  </main>
+  <!-- Fornalha -->
+  <div id="furnacePanel" aria-hidden="true">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div class="furnace-slot" id="furnaceInput">Input</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">Minerio (stack único)</div>
       </div>
-
-      <div style="margin-top:8px;display:flex;gap:8px;flex-direction:column">
-        <div style="display:flex;gap:8px">
-          <button id="openShop" class="btn">Loja</button>
-          <button id="openNether" class="btn">Entrar/Sair no Nether</button>
-          <button id="openFurnace" class="btn">Fornalha</button>
-        </div>
-
-        <div style="margin-top:10px">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Escolha a camada</div>
-          <div class="layer-select" id="layerSelect">
-            <button class="layer-btn" data-layer="surface" title="Superfície (50→35): Pedra, Carvão, Ferro predominam">Superfície</button>
-            <button class="layer-btn" data-layer="mid" title="Médio (30→10): Ouro, Diamante, Esmeralda, Lava e Obsidian">Médio</button>
-            <button class="layer-btn" data-layer="deep" title="Profundo (0→-20): Mais resistente; +5% diam/obsidian">Profundo</button>
-          </div>
-        </div>
+      <div style="display:flex;flex-direction:column;align-items:center;position:relative">
+        <div class="furnace-slot" id="furnaceFuel">Fuel</div>
+        <div class="stack-count" id="fuelCount">0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">Carvão (stack)</div>
       </div>
-
-      <h4 style="margin-top:12px">Inventário</h4>
-      <div class="sub">Arraste as imagens para crafting ou fornalha.</div>
-      <div id="invGrid" class="inv-grid" style="margin-top:8px"></div>
-
-      <div style="margin-top:12px">
-        <button id="buySticks" class="btn">Comprar Graveto (5⛃ → 4x)</button>
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div class="furnace-slot" id="furnaceOutput">Output</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">Ingot (pegue clicando)</div>
       </div>
-    </aside>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <button id="startSmelt" class="btn btn-accent">Iniciar / Auto</button>
+      <div class="progress-bar">
+        <div id="furnaceProgress" class="progress-fill"></div>
+      </div>
+      <button id="closeFurnace" class="btn">Fechar</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px">Coloque minério (iron/gold/ancient) no input (pode empilhar). Cada operação consome 1 minério + 1 carvão e produz 1 ingot.</div>
   </div>
+  <div id="toastArea"></div>
+  <script>
+    (function () {
+      const IMAGE = {
+        stone: './blocks/stone_1.jpg',
+        coal: './blocks/coal_1.jpg',
+        iron: './blocks/ferro_1.jpg',
+        gold: './blocks/ouro_1.jpg',
+        diamond: './blocks/diamante_1.jpg',
+        emerald: './blocks/esmeralda_1.jpg',
+        ancient: './blocks/netherite.jpg',
+        obsidian: './blocks/obsidian.jpg',
+        lava: './blocks/lava.jpg',
+        stick: './blocks/stick.png',
+        chest: './blocks/chest.jpg',
+        iron_ingot: './blocks/iron_ingot.png',
+        gold_ingot: './blocks/ouro_ingot.png',
+        ancient_ingot: './blocks/netherite_ingot.png'
+      };
 
-  <!-- Loja -->
-  <section class="panel" id="shopPanel" style="margin-top:14px;display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <h2>Loja & Receitas</h2>
-      <div><button id="shopToGame" class="btn">Voltar</button></div>
-    </div>
-    <div class="tabs" id="shopTabs" style="margin-top:12px">
-      <div class="tab active" data-tab="licenses">Licenças</div>
-      <div class="tab" data-tab="recipes">Receitas</div>
-      <div class="tab" data-tab="inventory">Inventário</div>
-    </div>
-    <div id="shopContent" style="margin-top:12px"></div>
-  </section>
-</main>
+      const SAVE_KEY = 'mc_clicker_full_v2_fixed';
+      const CHEST_SPAWN_CHANCE = 0.01;
+      const COIN_MULTIPLIER = 1.25;
+      const SMELT_TIME_MS = 5000;
 
-<!-- Fornalha -->
-<div id="furnacePanel" aria-hidden="true">
-  <div style="display:flex;align-items:center;gap:12px">
-    <div style="display:flex;flex-direction:column;align-items:center">
-      <div class="furnace-slot" id="furnaceInput">Input</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">Minerio (stack único)</div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center;position:relative">
-      <div class="furnace-slot" id="furnaceFuel">Fuel</div>
-      <div class="stack-count" id="fuelCount">0</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">Carvão (stack)</div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center">
-      <div class="furnace-slot" id="furnaceOutput">Output</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">Ingot (pegue clicando)</div>
-    </div>
-  </div>
-  <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-    <button id="startSmelt" class="btn btn-accent">Iniciar / Auto</button>
-    <div class="progress-bar"><div id="furnaceProgress" class="progress-fill"></div></div>
-    <button id="closeFurnace" class="btn">Fechar</button>
-  </div>
-  <div style="font-size:12px;color:var(--muted);margin-top:6px">Coloque minério (iron/gold/ancient) no input (pode empilhar). Cada operação consome 1 minério + 1 carvão e produz 1 ingot.</div>
-</div>
+      const GOLD_MIN_PICKAXE_INDEX = 2;
+      const DIAMOND_MIN_PICKAXE_INDEX = 2;
+      const EMERALD_MIN_PICKAXE_INDEX = 2;
+      const NETHERITE_MIN_PICKAXE_INDEX = 5;
+      const OBSIDIAN_MIN_PICKAXE_INDEX = 4;
+      const IRON_MIN_PICKAXE_INDEX = 1;
 
-<div id="toastArea"></div>
+      const state = {
+        clicks: 0,
+        coins: 0,
+        pickaxeIndex: 0,
+        fortuneLevel: 0,
+        speedTotal: 0,
+        inventory: {
+          stone: 0,
+          coal: 0,
+          iron: 0,
+          gold: 0,
+          diamond: 0,
+          emerald: 0,
+          ancient: 0,
+          obsidian: 0,
+          stick: 6,
+          iron_ingot: 0,
+          gold_ingot: 0,
+          ancient_ingot: 0
+        },
+        purchased: {},
+        blockCount: 0,
+        selectedLayer: 'surface',
+        furnace: {
+          input: null,
+          fuel: 0,
+          output: null,
+          isSmelting: false,
+          startedAt: 0,
+          auto: true
+        },
+        pickaxeEnchant: {
+          efficiency: 0, // aumenta velocidade
+          fortune: 0     // aumenta chance de moedas extras
+        }
+      };
 
-<script>
-/* Código completo atualizado — fix no validateCraft (licenças) */
-(function(){
-  const IMAGE = {
-    stone: './blocks/stone_1.jpg',
-    coal:  './blocks/coal_1.jpg',
-    iron:  './blocks/ferro_1.jpg',
-    gold:  './blocks/ouro_1.jpg',
-    diamond: './blocks/diamante_1.jpg',
-    emerald: './blocks/esmeralda_1.jpg',
-    ancient: './blocks/netherite.jpg',
-    obsidian: './blocks/obsidian.jpg',
-    lava: './blocks/lava.jpg',
-    stick: './blocks/stick.png',
-    chest: './blocks/chest.jpg',
-    iron_ingot: './blocks/iron_ingot.png',
-    gold_ingot: './blocks/ouro_ingot.png',
-    ancient_ingot: './blocks/netherite_ingot.png',
-    qrtz_nether: './blocks/quartz_nether.jpg',
-    n_gold: './blocks/ouro_nether.jpg',
-    n_ancient: './blocks/netherite.jpg',
-  };
-
-  const SAVE_KEY = 'mc_clicker_full_v2_fixed';
-  const CHEST_SPAWN_CHANCE = 0.01;
-  const COIN_MULTIPLIER = 1.25;
-  const SMELT_TIME_MS = 5000;
-
-  const GOLD_MIN_PICKAXE_INDEX = 2;
-  const DIAMOND_MIN_PICKAXE_INDEX = 4;
-  const EMERALD_MIN_PICKAXE_INDEX = 2;
-  const NETHERITE_MIN_PICKAXE_INDEX = 5;
-  const OBSIDIAN_MIN_PICKAXE_INDEX = 4;
-  const IRON_MIN_PICKAXE_INDEX = 1;
-
-  const state = {
-    clicks: 0, coins: 0, pickaxeIndex: 0, fortuneLevel: 0, speedTotal: 0,
-    inventory: { stone:0, coal:0, iron:0, gold:0, diamond:0, emerald:0, ancient:0, obsidian:12, stick:6, iron_ingot:0, gold_ingot:0, ancient_ingot:0 },
-    purchased: {}, netherUnlocked: false, blockCount: 0, selectedLayer: 'surface',
-    furnace: { input: null, fuel: 0, output: null, isSmelting:false, startedAt:0, auto:true }
-  };
-
-  const PICKAXES = [
-    { id:'wood', name:'Madeira', factor:1.00, power:1, price:0 },
-    { id:'stone', name:'Pedra', factor:0.70, power:2, price:10 },
-    { id:'iron', name:'Ferro', factor:0.50, power:4, price:50 },
-    { id:'gold', name:'Ouro', factor:0.40, power:6, price:200 },
-    { id:'diamond', name:'Diamante', factor:0.30, power:9, price:500 },
-    { id:'netherite', name:'Netherite', factor:0.20, power:14, price:1000 }
-  ];
-
-  const BASE_ORES = [
-    { id:'stone', label:'Pedra', isOre:false, baseCoins:0, baseHits:3, weight:85, img: IMAGE.stone },
-    { id:'coal', label:'Carvão', isOre:true, baseCoins:1, baseHits:4, weight:10, img: IMAGE.coal },
-    { id:'iron', label:'Ferro', isOre:true, baseCoins:2, baseHits:6, weight:4, img: IMAGE.iron, minPickaxe:IRON_MIN_PICKAXE_INDEX },
-    { id:'gold', label:'Ouro', isOre:true, baseCoins:3, baseHits:8, weight:1, img: IMAGE.gold, minPickaxe:GOLD_MIN_PICKAXE_INDEX },
-    { id:'diamond', label:'Diamante', isOre:true, baseCoins:6, baseHits:10, weight:0.2, img: IMAGE.diamond, minPickaxe:DIAMOND_MIN_PICKAXE_INDEX },
-    { id:'emerald', label:'Esmeralda', isOre:true, baseCoins:8, baseHits:12, weight:0.05, img: IMAGE.emerald, minPickaxe:EMERALD_MIN_PICKAXE_INDEX },
-    { id:'ancient', label:'Detritos', isOre:true, baseCoins:12, baseHits:15, weight:0.02, img: IMAGE.ancient, minPickaxe:NETHERITE_MIN_PICKAXE_INDEX }
-  ];
-
-  const NETHER_ORES = [
-    { id:'n_quartz', label:'Quartz (Nether)', isOre:true, baseCoins:1, baseHits:4, weight:40, img: IMAGE.qrtz_nether },
-    { id:'n_gold', label:'Ouro (Nether)', isOre:true, baseCoins:3, baseHits:6, weight:30, img: IMAGE.n_gold },
-    { id:'n_ancient', label:'Ancient (Nether)', isOre:true, baseCoins:8, baseHits:12, weight:1 },
-    { id:'n_enderpearl', label:'Ender Pearl', isOre:false, baseCoins:0, baseHits:3, weight:5 },
-    { id:'n_netherit_drop', label:'Netherite Shard', isOre:true, baseCoins:20, baseHits:10, weight:0.8 }
-  ];
-
-  const dom = {
-    block: document.getElementById('block'),
-    hpFill: document.getElementById('hpFill'),
-    statClicks: document.getElementById('statClicks'),
-    statCoins: document.getElementById('statCoins'),
-    statHits: document.getElementById('statHits'),
-    invGrid: document.getElementById('invGrid'),
-    pickaxeLabel: document.getElementById('pickaxeLabel'),
-    fortuneLabel: document.getElementById('fortuneLabel'),
-    speedLabel: document.getElementById('speedLabel'),
-    netherLabel: document.getElementById('netherLabel'),
-    craftGrid: null,
-    craftPreview: document.getElementById('craftPreview'),
-    craftBtn: document.getElementById('craftBtn'),
-    shopPanel: document.getElementById('shopPanel'),
-    shopContent: document.getElementById('shopContent'),
-    furnacePanel: document.getElementById('furnacePanel'),
-    furnaceInput: document.getElementById('furnaceInput'),
-    furnaceFuel: document.getElementById('furnaceFuel'),
-    furnaceOutput: document.getElementById('furnaceOutput'),
-    furnaceProgress: document.getElementById('furnaceProgress'),
-    fuelCount: document.getElementById('fuelCount')
-  };
-
-  let currentTile = { id:'stone', label:'Pedra', baseHits:3, isOre:false, img: IMAGE.stone, baseCoins:0, minPickaxe:0 };
-  let currentHP = 1;
-  let isNether = false;
-
-  function fmt(n){ return Math.floor(n).toLocaleString('pt-BR'); }
-  function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){console.warn(e);} }
-  function load(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(raw) Object.assign(state, JSON.parse(raw)); }catch(e){console.warn(e);} }
-  function showToast(text, ttl=1400){ const t=document.createElement('div'); t.className='toast'; t.textContent=text; document.body.appendChild(t); setTimeout(()=>t.remove(), ttl); }
-  function showLicenseToast(text){ const b=document.createElement('div'); b.className='license-toast'; b.textContent=text; document.body.appendChild(b); setTimeout(()=>b.remove(),2200); }
-  function weightedPick(arr){ const total = arr.reduce((s,o)=>s+(o.weight||0),0); let r=Math.random()*total; for(const o of arr){ r -= (o.weight||0); if(r<=0) return o; } return arr[0]; }
-
-  function getPoolForLayer(layer){
-    const pool = BASE_ORES.map(o=>Object.assign({},o));
-    let hitsMultiplier = 1.0;
-    if(layer === 'surface'){
-      pool.forEach(p=>{ if(p.id === 'stone') p.weight=70; if(p.id==='coal') p.weight=20; if(p.id==='iron') p.weight=10; if(p.id==='diamond') p.weight=0.1; if(p.id==='emerald') p.weight=0.02; });
-    } else if(layer === 'mid'){
-      pool.forEach(p=>{ if(p.id === 'stone') p.weight=45; if(p.id==='coal') p.weight=20; if(p.id==='iron') p.weight=10; if(p.id==='gold') p.weight=8; if(p.id==='diamond') p.weight=0.5; if(p.id==='emerald') p.weight=0.2; });
-    } else if(layer === 'deep'){
-      pool.forEach(p=>{ if(p.id === 'stone') p.weight=35; if(p.id==='coal') p.weight=18; if(p.id==='iron') p.weight=12; if(p.id==='gold') p.weight=8; if(p.id==='diamond') p.weight=6; if(p.id==='emerald') p.weight=0.4; if(p.id==='ancient') p.weight=0.05; });
-      hitsMultiplier = 1.25;
-    }
-    return { pool, hitsMultiplier };
-  }
-
-  function currentPickaxe(){ return PICKAXES[state.pickaxeIndex]; }
-  function effectiveFactor(){ const pkFactor = currentPickaxe().factor; return Math.max(0.15, pkFactor * (1 - state.speedTotal)); }
-  function calcHits(baseHits, hitsMultiplier=1){ return Math.max(1, Math.ceil(baseHits * effectiveFactor() * hitsMultiplier)); }
-  function totalPower(){ return currentPickaxe().power; }
-
-  function spawnTile(){
-    if(isNether){
-      const pick = weightedPick(NETHER_ORES);
-      currentTile = { id: pick.id, label: pick.label, baseHits: pick.baseHits, isOre: pick.isOre, img: null, baseCoins: pick.baseCoins || 0, minPickaxe:0 };
-      currentHP = calcHits(pick.baseHits, 1);
-      renderBlock();
-      if(Math.random() < 0.08) spawnBlaze();
-      return;
-    }
-
-    const { pool, hitsMultiplier } = getPoolForLayer(state.selectedLayer);
-    const poolCopy = pool.slice();
-    if(state.blockCount >= 200){
-      poolCopy.push({ id:'obsidian', label:'Obsidian', isOre:true, baseCoins:0, baseHits:25 * hitsMultiplier, weight:1, img: IMAGE.obsidian, minPickaxe:OBSIDIAN_MIN_PICKAXE_INDEX });
-      poolCopy.push({ id:'lava', label:'Lava', isOre:false, baseCoins:0, baseHits:1, weight:0.4, img: IMAGE.lava, minPickaxe:0 });
-    }
-
-    const p = weightedPick(poolCopy);
-    currentTile = { id: p.id, label: p.label, baseHits: p.baseHits, isOre: p.isOre, img: p.img, baseCoins: p.baseCoins || 0, minPickaxe: p.minPickaxe || 0 };
-    const appliedMultiplier = (state.selectedLayer === 'deep' ? 1.25 : 1.0);
-    currentHP = calcHits(p.baseHits, appliedMultiplier);
-    renderBlock();
-
-    if(Math.random() < CHEST_SPAWN_CHANCE) spawnChest();
-  }
-
-  function renderBlock(){
-    if(currentTile.img){ dom.block.style.backgroundImage = `url('${currentTile.img}')`; dom.block.style.backgroundSize = 'cover'; dom.block.style.backgroundPosition = 'center'; }
-    else { dom.block.style.backgroundImage = ''; dom.block.style.background = '#555'; }
-    dom.block.title = currentTile.label;
-    updateHpBar();
-  }
-
-  function updateHpBar(){
-    const baseHits = currentTile.baseHits || 1;
-    const effectiveMax = calcHits(baseHits, (state.selectedLayer === 'deep' ? 1.25 : 1.0));
-    dom.hpFill.style.width = Math.max(0, (currentHP/effectiveMax)*100) + '%';
-    dom.statHits.textContent = `${currentHP}/${effectiveMax}`;
-  }
-
-  function spawnChest(){
-    const chest = document.createElement('div'); chest.className='chest'; chest.style.backgroundImage = `url('${IMAGE.chest}')`; chest.style.backgroundSize = 'cover'; chest.style.backgroundPosition = 'center';
-    const bRect = dom.block.getBoundingClientRect();
-    chest.style.left = Math.random() * (bRect.width - 70) + 'px'; chest.style.top  = Math.random() * (bRect.height - 70) + 'px';
-    dom.block.appendChild(chest);
-    chest.onclick = (ev) => {
-      ev.stopPropagation();
-      const r = Math.random()*100;
-      if(r < 1.0){ state.inventory.diamond = (state.inventory.diamond||0)+1; state.coins += Math.round(10 * COIN_MULTIPLIER); showToast('Baú: Diamante!'); }
-      else if(r < 7.0){ state.inventory.gold = (state.inventory.gold||0)+2; state.coins += Math.round(4 * COIN_MULTIPLIER); showToast('Baú: Ouro!'); }
-      else if(r < 25.0){ state.inventory.iron = (state.inventory.iron||0)+2; state.coins += Math.round(2 * COIN_MULTIPLIER); showToast('Baú: Ferro!'); }
-      else { state.inventory.coal = (state.inventory.coal||0)+3; state.coins += Math.round(1 * COIN_MULTIPLIER); showToast('Baú: Carvão!'); }
-      chest.remove(); save(); updateAll();
-    };
-    setTimeout(()=>{ if(chest.parentElement) chest.remove(); },6000);
-  }
-
-  function triggerLava(){ currentTile = { id:'lava', label:'Lava', baseHits:1, isOre:false, img: IMAGE.lava, minPickaxe:0 }; currentHP = 1; renderBlock(); showToast('🔥 Lava apareceu! Não clique nela.'); setTimeout(()=>spawnTile(),3000); }
-
-  function spawnBlaze(){
-    if(!isNether) return;
-    const blaze = document.createElement('div'); blaze.className='chest'; blaze.style.background='linear-gradient(180deg,#ffb16b,#ff7a3c)'; blaze.textContent='🔥';
-    const bRect = dom.block.getBoundingClientRect(); blaze.style.left = Math.random() * (bRect.width - 70) + 'px'; blaze.style.top = Math.random() * (bRect.height - 70) + 'px';
-    dom.block.appendChild(blaze);
-    let blazeHp = 6;
-    blaze.onclick = (ev) => {
-      ev.stopPropagation();
-      blazeHp -= Math.max(1, Math.floor(totalPower()/2));
-      blaze.style.transform='scale(0.95)'; setTimeout(()=>blaze.style.transform='scale(1)',80);
-      if(blazeHp <= 0){
-        const r = Math.random()*100;
-        if(r < 0.8){ state.inventory.ancient = (state.inventory.ancient||0)+1; showToast('Blaze: Ancient!'); }
-        else if(r < 6){ state.inventory.diamond = (state.inventory.diamond||0)+1; showToast('Blaze: Diamond!'); }
-        else if(r < 20){ state.inventory.stick = (state.inventory.stick||0)+1; showToast('Blaze: Graveto!'); }
-        else { state.inventory.iron = (state.inventory.iron||0)+1; showToast('Blaze: Ferro!'); }
-        blaze.remove(); save(); updateAll();
-      }
-    };
-    setTimeout(()=>{ if(blaze.parentElement) blaze.remove(); },8000);
-  }
-
-  dom.block.addEventListener('mousedown', e => e.preventDefault());
-
-  dom.block.addEventListener('click', function(e){
-    if(currentTile.id === 'lava'){
-      const lose = Math.ceil(state.coins * 0.10);
-      state.coins = Math.max(0, state.coins - lose);
-      showToast('Queimou! Perdeu ' + lose + '⛃');
-      if(state.pickaxeIndex < 4 && Math.random() < 0.5){ state.pickaxeIndex = 0; showToast('Sua picareta quebrou!'); }
-      save(); spawnTile(); updateAll(); return;
-    }
-
-    currentHP -= 1; state.clicks += 1;
-    spawnParticle(e.clientX, e.clientY, '⛏');
-
-    if(currentHP <= 0){
-      if(currentTile.minPickaxe && state.pickaxeIndex < currentTile.minPickaxe){
-        showToast('Picareta muito fraca — não coletou o bloco.');
-        spawnTile(); save(); updateAll(); return;
-      }
-      if(currentTile.id === 'obsidian'){
-        if(state.pickaxeIndex >= OBSIDIAN_MIN_PICKAXE_INDEX){
-          state.inventory.obsidian = (state.inventory.obsidian||0) + 1; showToast('Obsidian coletada!');
-        } else { showToast('Picareta muito fraca — obsidian não coletada.'); }
-        spawnTile(); save(); updateAll(); return;
-      }
-
-      if(currentTile.isOre && currentTile.baseCoins){ state.coins += Math.round(currentTile.baseCoins * COIN_MULTIPLIER); const fortuneChance = [0,0.15,0.30,0.45][state.fortuneLevel] || 0; if(Math.random() < fortuneChance){ state.coins += 1; showToast('Fortuna +1!'); } }
-      if(currentTile.id && currentTile.id !== 'lava'){ state.inventory[currentTile.id] = (state.inventory[currentTile.id]||0) + 1; }
-      state.blockCount++;
-      if(state.blockCount >= 200 && Math.random() < 0.03) triggerLava();
-      else spawnTile();
-      save();
-    } else updateHpBar();
-    updateAll();
-  });
-
-  function spawnParticle(clientX, clientY, text){
-    const p = document.createElement('div'); p.className='particle'; p.textContent = text;
-    const rect = dom.block.getBoundingClientRect();
-    p.style.left = (clientX - rect.left - 6) + 'px'; p.style.top = (clientY - rect.top - 6) + 'px';
-    dom.block.appendChild(p); setTimeout(()=>p.remove(),900);
-  }
-
-  function buildInventoryUI(){
-    dom.invGrid.innerHTML = '';
-    Object.entries(state.inventory).forEach(([key, qty]) => {
-      const wrapper = document.createElement('div'); wrapper.className='inv-item'; wrapper.draggable = true; wrapper.dataset.item = key;
-      const imgUrl = IMAGE[key] || '';
-      wrapper.innerHTML = `${ imgUrl ? `<img src="${imgUrl}" alt="${key}" draggable="false">` : `<div style="font-weight:800">${key}</div>` }
-                           <div style="font-weight:700;text-transform:capitalize">${key.replace('_',' ')}</div>
-                           <div class="inv-qty">${qty}x</div>`;
-      wrapper.addEventListener('dragstart', (ev) => {
-        ev.dataTransfer.setData('text/plain', key);
-        try { const img = wrapper.querySelector('img'); if(img) ev.dataTransfer.setDragImage(img, 24, 24); } catch(e){}
-        wrapper.classList.add('dragging');
-      });
-      wrapper.addEventListener('dragend', () => wrapper.classList.remove('dragging'));
-      dom.invGrid.appendChild(wrapper);
-    });
-  }
-
-  function buildCraftGrid(){
-    const grid = document.getElementById('craftGrid'); grid.innerHTML = '';
-    for(let i=0;i<9;i++){
-      const slot = document.createElement('div'); slot.className='slot'; slot.dataset.index = i; slot.dataset.item = '';
-      slot.addEventListener('dragover', (e)=>{ e.preventDefault(); slot.classList.add('over'); });
-      slot.addEventListener('dragleave', ()=> slot.classList.remove('over'));
-      slot.addEventListener('drop', (e)=> {
-        e.preventDefault(); slot.classList.remove('over');
-        const item = e.dataTransfer.getData('text/plain'); if(!item) return;
-        if((state.inventory[item]||0) <= 0){ showToast('Você não tem esse item'); return; }
-        const prev = slot.dataset.item;
-        if(prev){ state.inventory[prev] = (state.inventory[prev]||0) + 1; }
-        slot.dataset.item = item;
-        slot.innerHTML = renderSlotImage(item);
-        state.inventory[item] = (state.inventory[item]||0) - 1;
-        buildInventoryUI(); updateCraftPreview();
-      });
-      slot.addEventListener('click', ()=>{
-        const prev = slot.dataset.item;
-        if(prev){ state.inventory[prev] = (state.inventory[prev]||0) + 1; slot.dataset.item = ''; slot.innerHTML = ''; buildInventoryUI(); updateCraftPreview(); }
-      });
-      grid.appendChild(slot);
-    }
-    dom.craftGrid = grid;
-  }
-
-  function renderSlotImage(key){
-    const url = IMAGE[key];
-    if(!url) return `<div style="font-weight:700">${key}</div>`;
-    return `<img src="${url}" alt="${key}" style="width:44px;height:44px;pointer-events:none"><div style="font-size:11px;color:var(--muted);margin-top:2px">${key.replace('_',' ')}</div>`;
-  }
-
-  /* --------------- FIX: validação do craft (robusta) --------------- */
-  function validateCraft(){
-    if(!dom.craftGrid) return null;
-    const slots = [...dom.craftGrid.children].map(s => s.dataset.item || '');
-    // top row filled and equal
-    if(!(slots[0] && slots[1] && slots[2])) return null;
-    if(!(slots[0] === slots[1] && slots[1] === slots[2])) return null;
-    // sticks positions: center (4) and below (7)
-    if(slots[4] !== 'stick' || slots[7] !== 'stick') return null;
-
-    const top = slots[0]; // e.g. 'iron_ingot' ou 'stone' ou 'diamond'
-    if(!top) return null;
-
-    // mapping: recognize top types and map to pickaxe id + requirement label
-    // Accept either raw (stone, diamond, emerald) or ingot keys for iron/gold/ancient.
-    const mapping = {
-      // raw -> craft directly
-      stone: { pick: 'stone', needsIngot: false, requireKey: 'stone' },
-      diamond: { pick: 'diamond', needsIngot: false, requireKey: 'diamond' },
-      emerald: { pick: 'diamond', needsIngot: false, requireKey: 'emerald' },
-      // ingots -> require ingot keys
-      iron_ingot: { pick: 'iron', needsIngot: true, requireKey: 'iron_ingot' },
-      gold_ingot: { pick: 'gold', needsIngot: true, requireKey: 'gold_ingot' },
-      ancient_ingot: { pick: 'netherite', needsIngot: true, requireKey: 'ancient_ingot' }
-    };
-
-    const entry = mapping[top];
-    if(!entry){
-      // if user placed raw 'iron' (wrong) show helpful hint
-      if(top === 'iron' || top === 'gold' || top === 'ancient') {
-        showToast('Use ingots (smeltados) para craftar picaretas de ferro/ouro/netherite.');
-      }
-      return null;
-    }
-
-    // Additional: validate that the slots[0..2] are the exact requireKey (they are equal earlier)
-    if(slots[0] !== entry.requireKey) return null;
-
-    // license check
-    const licenseKey = 'license_' + entry.pick;
-    if(!state.purchased[licenseKey]){
-      showToast('Você precisa comprar a licença da picareta "' + entry.pick + '" na Loja (Loja → Licenças).');
-      return null;
-    }
-
-    return entry.pick; // ok, returns pickaxe id
-  }
-
-  function updateCraftPreview(){
-    const pickId = validateCraft();
-    if(pickId){
-      const p = PICKAXES.find(x=>x.id===pickId);
-      dom.craftPreview.innerHTML = `<div style="font-weight:800">${p ? p.name : '—'}</div>`;
-      dom.craftBtn.disabled = false;
-    } else {
-      dom.craftPreview.textContent = '—';
-      dom.craftBtn.disabled = true;
-    }
-  }
-
-  dom.craftBtn.addEventListener('click', ()=>{
-    const pickId = validateCraft();
-    if(!pickId){ showToast('Receita inválida ou licença ausente'); return; }
-    const idx = PICKAXES.findIndex(p=>p.id===pickId);
-    if(idx < 0){ showToast('Erro ao craftar'); return; }
-    [...dom.craftGrid.children].forEach(s=>{ s.dataset.item=''; s.innerHTML=''; });
-    state.pickaxeIndex = idx;
-    showToast('Craftado e equipado: ' + PICKAXES[idx].name);
-    dom.craftPreview.textContent = '—'; dom.craftBtn.disabled = true; buildInventoryUI(); updateAll(); save();
-  });
-
-  /* ------------------ SHOP / LICENSES / RECIPES ------------------ */
-  const shopTabs = document.querySelectorAll('#shopTabs .tab');
-  shopTabs.forEach(tab => tab.addEventListener('click', ()=>{ shopTabs.forEach(t=>t.classList.remove('active')); tab.classList.add('active'); renderShop(tab.dataset.tab); }));
-
-  function renderShop(tab='licenses'){
-    const content = document.getElementById('shopContent'); content.innerHTML = '';
-    if(tab === 'licenses'){
-      const grid = document.createElement('div'); grid.className='shop-grid';
-      PICKAXES.forEach((p) => {
-        if(p.id === 'wood') return;
-        const node = document.createElement('div'); node.className='shop-item';
-        const img = IMAGE[p.id] || '';
-        const licKey = 'license_' + p.id;
-        const owned = !!state.purchased[licKey];
-        node.innerHTML = `<div class="icon">${ img ? `<img src="${img}" style="width:40px;height:40px">` : '📜' }</div>
-                          <div style="flex:1"><div style="font-weight:800">${p.name} (Licença)</div>
-                          <div class="sub">Preço: ${p.price}⛃ — permite craftar esta picareta</div></div>
-                          <div>${ owned ? '<div class="badge-owned">Licença</div>' : `<button class="btn btn-accent" data-buy-lic="${p.id}">Comprar • ${p.price}⛃</button>` }</div>`;
-        grid.appendChild(node);
-      });
-      content.appendChild(grid);
-      content.querySelectorAll('[data-buy-lic]').forEach(btn => {
-        btn.addEventListener('click', ()=>{
-          const id = btn.dataset.buyLic; const p = PICKAXES.find(x=>x.id===id);
-          if(state.coins < p.price){ showToast('Sem moedas'); return; }
-          state.coins -= p.price; state.purchased['license_' + id] = true;
-          showLicenseToast('Licença adquirida: ' + p.name);
-          save(); renderShop('licenses'); updateAll();
-        });
-      });
-    } else if(tab === 'recipes'){
-      const recipes = [
-        { name:'Picareta de Pedra', top:'stone'},
-        { name:'Picareta de Ferro', top:'iron'},
-        { name:'Picareta de Ouro', top:'gold'},
-        { name:'Picareta de Diamante', top:'diamond'},
-        { name:'Picareta Netherite', top:'ancient'}
+      const PICKAXES = [
+        { id: 'wood', name: 'Madeira', factor: 1.00, power: 1, price: 0 },
+        { id: 'stone', name: 'Pedra', factor: 0.70, power: 2, price: 10 },
+        { id: 'iron', name: 'Ferro', factor: 0.50, power: 4, price: 50 },
+        { id: 'emerald', name: 'Esmeralda', factor: 0.45, power: 5, price: 150 },
+        { id: 'gold', name: 'Ouro', factor: 0.40, power: 6, price: 200 },
+        { id: 'diamond', name: 'Diamante', factor: 0.30, power: 9, price: 500 },
+        { id: 'netherite', name: 'Netherite', factor: 0.20, power: 14, price: 1000 }
       ];
-      recipes.forEach(r => {
-        const box = document.createElement('div'); box.className='shop-item';
-        const img = IMAGE[r.top] || '';
-        const pickId = (r.top === 'ancient') ? 'netherite' : r.top;
-        const licKey = 'license_' + pickId;
-        const owned = !!state.purchased[licKey];
-        const price = PICKAXES.find(p=>p.id===pickId)?.price || 0;
-        box.innerHTML = `<div class="icon">${ img ? `<img src="${img}" style="width:40px;height:40px">` : '📜' }</div>
-                         <div style="flex:1">
-                           <div style="font-weight:800">${r.name}</div>
-                           <div class="sub">Receita: 3x ${r.top} na linha superior + graveto (centro + abaixo)</div>
-                         </div>
-                         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-                           ${ owned ? `<div class="badge-owned">Licença comprada</div>` : `<button class="badge-buy" data-buy-recipe="${pickId}">Comprar licença • ${price}⛃</button>` }
-                         </div>`;
-        content.appendChild(box);
-      });
-      content.querySelectorAll('[data-buy-recipe]').forEach(btn => {
-        btn.addEventListener('click', ()=>{
-          const pickId = btn.dataset.buyRecipe; const p = PICKAXES.find(x=>x.id===pickId);
-          if(state.coins < p.price){ showToast('Sem moedas'); return; }
-          state.coins -= p.price; state.purchased['license_' + pickId] = true;
-          showLicenseToast('Licença adquirida: ' + p.name); save(); renderShop('recipes'); updateAll();
+
+      const BASE_ORES = [
+        { id: 'stone', label: 'Pedra', isOre: false, baseCoins: 0, baseHits: 3, weight: 85, img: IMAGE.stone },
+        { id: 'coal', label: 'Carvão', isOre: true, baseCoins: 1, baseHits: 4, weight: 10, img: IMAGE.coal },
+        { id: 'iron', label: 'Ferro', isOre: true, baseCoins: 2, baseHits: 6, weight: 4, img: IMAGE.iron, minPickaxe: IRON_MIN_PICKAXE_INDEX },
+        { id: 'gold', label: 'Ouro', isOre: true, baseCoins: 3, baseHits: 8, weight: 1, img: IMAGE.gold, minPickaxe: GOLD_MIN_PICKAXE_INDEX },
+        { id: 'diamond', label: 'Diamante', isOre: true, baseCoins: 6, baseHits: 10, weight: 0.2, img: IMAGE.diamond, minPickaxe: DIAMOND_MIN_PICKAXE_INDEX },
+        { id: 'emerald', label: 'Esmeralda', isOre: true, baseCoins: 8, baseHits: 12, weight: 0.05, img: IMAGE.emerald, minPickaxe: EMERALD_MIN_PICKAXE_INDEX },
+        { id: 'ancient', label: 'Detritos', isOre: true, baseCoins: 12, baseHits: 15, weight: 0.02, img: IMAGE.ancient, minPickaxe: NETHERITE_MIN_PICKAXE_INDEX }
+      ];
+
+      const dom = {
+        block: document.getElementById('block'),
+        hpFill: document.getElementById('hpFill'),
+        statClicks: document.getElementById('statClicks'),
+        statCoins: document.getElementById('statCoins'),
+        statHits: document.getElementById('statHits'),
+        invGrid: document.getElementById('invGrid'),
+        pickaxeLabel: document.getElementById('pickaxeLabel'),
+        fortuneLabel: document.getElementById('fortuneLabel'),
+        speedLabel: document.getElementById('speedLabel'),
+        craftGrid: null,
+        craftPreview: document.getElementById('craftPreview'),
+        craftBtn: document.getElementById('craftBtn'),
+        shopPanel: document.getElementById('shopPanel'),
+        shopContent: document.getElementById('shopContent'),
+        furnacePanel: document.getElementById('furnacePanel'),
+        furnaceInput: document.getElementById('furnaceInput'),
+        furnaceFuel: document.getElementById('furnaceFuel'),
+        furnaceOutput: document.getElementById('furnaceOutput'),
+        furnaceProgress: document.getElementById('furnaceProgress'),
+        fuelCount: document.getElementById('fuelCount')
+      };
+
+      let currentTile = { id: 'stone', label: 'Pedra', baseHits: 3, isOre: false, img: IMAGE.stone, baseCoins: 0, minPickaxe: 0 };
+      let currentHP = 1;
+
+      function fmt(n) { return Math.floor(n).toLocaleString('pt-BR'); }
+      function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { console.warn(e); } }
+      function load() { try { const raw = localStorage.getItem(SAVE_KEY); if (raw) Object.assign(state, JSON.parse(raw)); } catch (e) { console.warn(e); } }
+      function showToast(text, ttl = 1400) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), ttl); }
+      function showLicenseToast(text) { const b = document.createElement('div'); b.className = 'license-toast'; b.textContent = text; document.body.appendChild(b); setTimeout(() => b.remove(), 2200); }
+      function weightedPick(arr) { const total = arr.reduce((s, o) => s + (o.weight || 0), 0); let r = Math.random() * total; for (const o of arr) { r -= (o.weight || 0); if (r <= 0) return o; } return arr[0]; }
+
+    function getPoolForLayer(layer) {
+      const pool = BASE_ORES.map(o => Object.assign({}, o));
+      let hitsMultiplier = 1.0;
+      if (layer === 'surface') {
+        pool.forEach(p => { if (p.id === 'stone') p.weight = 70; if (p.id === 'coal') p.weight = 20; if (p.id === 'iron') p.weight = 10; if (p.id === 'diamond') p.weight = 0.1; if (p.id === 'emerald') p.weight = 0.02; });
+      } else if (layer === 'mid') {
+        pool.forEach(p => { if (p.id === 'stone') p.weight = 45; if (p.id === 'coal') p.weight = 20; if (p.id === 'iron') p.weight = 10; if (p.id === 'gold') p.weight = 8; if (p.id === 'diamond') p.weight = 0.5; if (p.id === 'emerald') p.weight = 0.2; });
+      } else if (layer === 'deep') {
+        pool.forEach(p => {
+          if (p.id === 'stone') p.weight = 35;
+          if (p.id === 'coal') p.weight = 18;
+          if (p.id === 'iron') p.weight = 12;
+          if (p.id === 'gold') p.weight = 8;
+          if (p.id === 'diamond') p.weight = 6;
+          if (p.id === 'emerald') p.weight = 0.4;
+          if (p.id === 'ancient') p.weight = 0.05;
+          if (p.id === 'stone') p.img = './blocks/deep_stone.png';
+          if (p.id === 'iron') p.img = './blocks/deep_ferro.jpg';
+          if (p.id === 'gold') p.img = './blocks/deep_ouro.jpg';
+          if (p.id === 'diamond') p.img = './blocks/deep_diamante.jpg';
+          if (p.id === 'emerald') p.img = './blocks/deep_esmeralda.jpg';
+          if (p.id === 'coal') p.img = './blocks/deep_coal.jpg';
         });
-      });
-    } else if(tab === 'inventory'){
-      const wrap = document.createElement('div'); wrap.className='shop-grid';
-      Object.entries(state.inventory).forEach(([k,v])=>{
-        const n = document.createElement('div'); n.className='shop-item';
-        const img = IMAGE[k] || '';
-        n.innerHTML = `<div class="icon">${ img ? `<img src="${img}" style="width:40px;height:40px">` : k[0].toUpperCase() }</div>
-                       <div style="flex:1"><div style="font-weight:800">${k}</div><div class="sub">${v}x</div></div>`;
-        wrap.appendChild(n);
-      });
-      content.appendChild(wrap);
-    }
-  }
-
-  document.getElementById('buySticks').addEventListener('click', ()=>{ if(state.coins < 5){ showToast('Sem moedas'); return; } state.coins -= 5; state.inventory.stick = (state.inventory.stick||0) + 4; buildInventoryUI(); updateAll(); save(); });
-
-  document.querySelectorAll('.layer-btn').forEach(btn=>{ btn.addEventListener('click', ()=>{ state.selectedLayer = btn.dataset.layer; document.querySelectorAll('.layer-btn').forEach(b=>b.classList.toggle('active', b===btn)); showToast('Camada: ' + (state.selectedLayer==='surface'?'Superfície':state.selectedLayer==='mid'?'Médio':'Profundo')); spawnTile(); updateAll(); save(); }); });
-
-  document.getElementById('openNether').addEventListener('click', ()=>{ if(!state.netherUnlocked){ if((state.inventory.obsidian||0) < 12){ alert('Você precisa de 12 obsidians para liberar o Nether'); return; } state.netherUnlocked = true; showToast('Nether desbloqueado!'); } isNether = !isNether; document.body.classList.toggle('nether', isNether); dom.netherLabel.textContent = isNether ? 'Nether: ✔️' : 'Nether: ❌'; spawnTile(); updateAll(); });
-
-  document.getElementById('btnSave').addEventListener('click', ()=>{ save(); showToast('Salvo'); });
-  document.getElementById('btnReset').addEventListener('click', ()=>{ if(confirm('Resetar todo o progresso?')){ localStorage.removeItem(SAVE_KEY); location.reload(); }});
-  document.getElementById('openShop').addEventListener('click', ()=>{ document.getElementById('shopPanel').style.display='block'; renderShop('licenses'); });
-  document.getElementById('shopToGame').addEventListener('click', ()=>{ document.getElementById('shopPanel').style.display='none'; });
-
-  // Fornalha (empilhável) - drop handlers
-  document.getElementById('openFurnace').addEventListener('click', ()=>{ dom.furnacePanel.style.display = dom.furnacePanel.style.display === 'block' ? 'none' : 'block'; renderFurnaceSlots(); });
-  document.getElementById('closeFurnace').addEventListener('click', ()=> dom.furnacePanel.style.display='none');
-
-  function setupFurnaceDrops(){
-    function acceptDrop(el, type){
-      el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('over'); });
-      el.addEventListener('dragleave', ()=> el.classList.remove('over'));
-      el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('over'); const item = e.dataTransfer.getData('text/plain'); if(!item) return;
-        if(type === 'input'){
-          if(!['iron','gold','ancient'].includes(item)){ showToast('Somente minério (iron/gold/ancient) no input'); return; }
-          if((state.inventory[item]||0) <= 0){ showToast('Você não tem esse item'); return; }
-          if(state.furnace.input && state.furnace.input.item !== item){ showToast('Input já contém outro minério. Retire primeiro.'); return; }
-          state.inventory[item] = (state.inventory[item]||0) - 1;
-          if(!state.furnace.input) state.furnace.input = { item: item, qty: 0 };
-          state.furnace.input.qty += 1; renderFurnaceSlots(); buildInventoryUI(); save();
-        }
-        if(type === 'fuel'){
-          if(item !== 'coal'){ showToast('Apenas carvão serve como fuel'); return; }
-          if((state.inventory[item]||0) <= 0){ showToast('Você não tem carvão'); return; }
-          state.inventory[item] = (state.inventory[item]||0) - 1; state.furnace.fuel = (state.furnace.fuel||0) + 1; renderFurnaceSlots(); buildInventoryUI(); save();
-        }
-        if(type === 'output'){
-          if(!state.furnace.output){ showToast('Nada pronto'); return; }
-          const out = state.furnace.output; state.inventory[out.item] = (state.inventory[out.item]||0) + out.qty; state.furnace.output = null; renderFurnaceSlots(); buildInventoryUI(); save();
-        }
-      });
-    }
-    acceptDrop(dom.furnaceInput, 'input'); acceptDrop(dom.furnaceFuel, 'fuel'); acceptDrop(dom.furnaceOutput, 'output');
-  }
-
-  function renderFurnaceSlots(){
-    if(state.furnace.input) dom.furnaceInput.innerHTML = `<img src="${IMAGE[state.furnace.input.item]}" style="width:48px;height:48px;pointer-events:none"><div style="font-size:12px;color:var(--muted)">${state.furnace.input.qty}x</div>`;
-    else dom.furnaceInput.textContent = 'Input';
-    dom.fuelCount.textContent = state.furnace.fuel || 0;
-    dom.furnaceFuel.innerHTML = state.furnace.fuel ? `<img src="${IMAGE.coal}" style="width:48px;height:48px;pointer-events:none">` : 'Fuel';
-    if(state.furnace.output) dom.furnaceOutput.innerHTML = `<img src="${IMAGE[state.furnace.output.item]}" style="width:48px;height:48px;pointer-events:none"><div style="font-size:12px;color:var(--muted)">${state.furnace.output.qty}x</div>`;
-    else dom.furnaceOutput.textContent = 'Output';
-    const pct = state.furnace.isSmelting ? Math.min(100, (Date.now() - state.furnace.startedAt) / SMELT_TIME_MS * 100) : 0;
-    dom.furnaceProgress.style.width = pct + '%';
-  }
-
-  document.getElementById('startSmelt').addEventListener('click', ()=>{
-    state.furnace.auto = !state.furnace.auto;
-    if(state.furnace.auto) showToast('Fornalha: Auto ON');
-    else showToast('Fornalha: Auto OFF');
-    if(state.furnace.auto && !state.furnace.isSmelting) attemptStartSmelt();
-    renderFurnaceSlots(); save();
-  });
-
-  function attemptStartSmelt(){
-    if(state.furnace.isSmelting) return;
-    if(!state.furnace.input || state.furnace.input.qty <= 0) return;
-    if((state.furnace.fuel||0) <= 0){ showToast('Sem combustível'); return; }
-    state.furnace.fuel -= 1; state.furnace.isSmelting = true; state.furnace.startedAt = Date.now(); renderFurnaceSlots(); save();
-  }
-
-  setInterval(()=>{
-    if(state.furnace.isSmelting){
-      const elapsed = Date.now() - state.furnace.startedAt;
-      const pct = Math.min(100, elapsed / SMELT_TIME_MS * 100);
-      dom.furnaceProgress.style.width = pct + '%';
-      if(elapsed >= SMELT_TIME_MS){
-        const input = state.furnace.input;
-        if(!input){ state.furnace.isSmelting = false; state.furnace.startedAt = 0; renderFurnaceSlots(); save(); return; }
-        const mapping = { iron:'iron_ingot', gold:'gold_ingot', ancient:'ancient_ingot' };
-        const outItem = mapping[input.item] || null;
-        if(outItem){ if(!state.furnace.output) state.furnace.output = { item: outItem, qty: 0 }; state.furnace.output.qty += 1; }
-        else { state.inventory[input.item] = (state.inventory[input.item]||0) + 1; }
-        input.qty -= 1; if(input.qty <= 0) state.furnace.input = null;
-        state.furnace.isSmelting = false; state.furnace.startedAt = 0; renderFurnaceSlots(); buildInventoryUI(); save();
-        if(state.furnace.auto && state.furnace.input && state.furnace.input.qty > 0 && (state.furnace.fuel||0) > 0) attemptStartSmelt();
+        hitsMultiplier = 2;
       }
-    } else {
-      if(state.furnace.auto && state.furnace.input && state.furnace.input.qty > 0 && (state.furnace.fuel||0) > 0) attemptStartSmelt();
+      return { pool, hitsMultiplier };
     }
-  }, 400);
 
-  dom.furnaceOutput.addEventListener('click', ()=>{
-    if(!state.furnace.output){ showToast('Nada pronto'); return; }
-    const out = state.furnace.output; state.inventory[out.item] = (state.inventory[out.item]||0) + out.qty; state.furnace.output = null; renderFurnaceSlots(); buildInventoryUI(); save();
-  });
+      function currentPickaxe() { return PICKAXES[state.pickaxeIndex]; }
+      function effectiveFactor() { const pkFactor = currentPickaxe().factor; return Math.max(0.15, pkFactor * (1 - state.speedTotal)); }
+      function calcHits(baseHits, hitsMultiplier = 1) { return Math.max(1, Math.ceil(baseHits * effectiveFactor() * hitsMultiplier)); }
+      function totalPower() { return currentPickaxe().power; }
 
-  function updateAll(){
-    dom.statClicks.textContent = fmt(state.clicks);
-    dom.statCoins.textContent = fmt(state.coins);
-    dom.pickaxeLabel.textContent = 'Picareta: ' + PICKAXES[state.pickaxeIndex].name;
-    dom.fortuneLabel.textContent = 'Fortuna: ' + (state.fortuneLevel * 15) + '%';
-    dom.speedLabel.textContent = 'Velocidade: x' + (1 - state.speedTotal).toFixed(2);
-    dom.netherLabel.textContent = state.netherUnlocked ? 'Nether: ✔️' : 'Nether: ❌';
-    buildInventoryUI(); updateHpBar(); updateCraftPreview(); renderFurnaceSlots();
-  }
+      function spawnTile() {
+        const { pool, hitsMultiplier } = getPoolForLayer(state.selectedLayer);
+        const poolCopy = pool.slice();
+        if (state.blockCount >= 200) {
+          poolCopy.push({
+            id: 'obsidian',
+            label: 'Obsidian',
+            isOre: true,
+            baseCoins: 0,
+            baseHits: 25 * hitsMultiplier,
+            weight: 1,
+            img: IMAGE.obsidian,
+            minPickaxe: OBSIDIAN_MIN_PICKAXE_INDEX
+          });
+          // Só adiciona lava se NÃO estiver na superfície
+          if (state.selectedLayer === 'deep' || state.selectedLayer === 'mid') {
+            poolCopy.push({
+              id: 'lava',
+              label: 'Lava',
+              isOre: false,
+              baseCoins: 0,
+              baseHits: 1,
+              weight: 0.4,
+              img: IMAGE.lava,
+              minPickaxe: 0
+            });
+          }
+        }
+        // Remover lava do pool caso esteja na superfície (garantia extra)
+        if (state.selectedLayer === 'surface') {
+          for (let i = poolCopy.length - 1; i >= 0; i--) {
+            if (poolCopy[i].id === 'lava') poolCopy.splice(i, 1);
+          }
+        }
+        const p = weightedPick(poolCopy);
+        currentTile = {
+          id: p.id,
+          label: p.label,
+          baseHits: p.baseHits,
+          isOre: p.isOre,
+          img: p.img,
+          baseCoins: p.baseCoins || 0,
+          minPickaxe: p.minPickaxe || 0
+        };
+        const appliedMultiplier = (state.selectedLayer === 'deep' ? 1.25 : 1.0);
+        currentHP = calcHits(p.baseHits, appliedMultiplier);
+        renderBlock();
+        if (Math.random() < CHEST_SPAWN_CHANCE) spawnChest();
+      }
 
-  function buildInventoryUI(){
-    dom.invGrid.innerHTML = '';
-    Object.entries(state.inventory).forEach(([key, qty])=>{
-      const wrapper = document.createElement('div'); wrapper.className='inv-item'; wrapper.draggable = true; wrapper.dataset.item = key;
-      const imgUrl = IMAGE[key] || '';
-      wrapper.innerHTML = `${ imgUrl ? `<img src="${imgUrl}" alt="${key}" draggable="false">` : `<div style="font-weight:800">${key}</div>` }
-                           <div style="font-weight:700;text-transform:capitalize">${key.replace('_',' ')}</div>
-                           <div class="inv-qty">${qty}x</div>`;
-      wrapper.addEventListener('dragstart', (ev)=>{ ev.dataTransfer.setData('text/plain', key); try{ const img = wrapper.querySelector('img'); if(img) ev.dataTransfer.setDragImage(img,24,24); }catch(e){} wrapper.classList.add('dragging'); });
-      wrapper.addEventListener('dragend', ()=> wrapper.classList.remove('dragging'));
-      dom.invGrid.appendChild(wrapper);
+      function renderBlock() {
+        if (currentTile.img) {
+          dom.block.style.backgroundImage = `url('${currentTile.img}')`;
+          dom.block.style.backgroundSize = 'cover';
+          dom.block.style.backgroundPosition = 'center';
+        } else {
+          dom.block.style.backgroundImage = '';
+          dom.block.style.background = '#555';
+        }
+        dom.block.title = currentTile.label;
+        updateHpBar();
+      }
+
+      function updateHpBar() {
+        const baseHits = currentTile.baseHits || 1;
+        const effectiveMax = calcHits(baseHits, (state.selectedLayer === 'deep' ? 1.25 : 1.0));
+        dom.hpFill.style.width = Math.max(0, (currentHP / effectiveMax) * 100) + '%';
+        dom.statHits.textContent = `${currentHP}/${effectiveMax}`;
+      }
+
+      function spawnChest() {
+        const chest = document.createElement('div');
+        chest.className = 'chest';
+        chest.style.backgroundImage = `url('${IMAGE.chest}')`;
+        chest.style.backgroundSize = 'cover';
+        chest.style.backgroundPosition = 'center';
+        const bRect = dom.block.getBoundingClientRect();
+        chest.style.left = Math.random() * (bRect.width - 70) + 'px';
+        chest.style.top = Math.random() * (bRect.height - 70) + 'px';
+        dom.block.appendChild(chest);
+        chest.onclick = (ev) => {
+          ev.stopPropagation();
+          const r = Math.random() * 100;
+          if (r < 1.0) {
+            state.inventory.diamond = (state.inventory.diamond || 0) + 1;
+            state.coins += Math.round(10 * COIN_MULTIPLIER);
+            showToast('Baú: Diamante!');
+          } else if (r < 7.0) {
+            state.inventory.gold = (state.inventory.gold || 0) + 2;
+            state.coins += Math.round(4 * COIN_MULTIPLIER);
+            showToast('Baú: Ouro!');
+          } else if (r < 25.0) {
+            state.inventory.iron = (state.inventory.iron || 0) + 2;
+            state.coins += Math.round(2 * COIN_MULTIPLIER);
+            showToast('Baú: Ferro!');
+          } else {
+            state.inventory.coal = (state.inventory.coal || 0) + 3;
+            state.coins += Math.round(1 * COIN_MULTIPLIER);
+            showToast('Baú: Carvão!');
+          }
+          chest.remove();
+          save();
+          updateAll();
+        };
+        setTimeout(() => { if (chest.parentElement) chest.remove(); }, 6000);
+      }
+
+      function triggerLava() {
+        if (state.selectedLayer === 'surface') {
+          spawnTile();
+          return;
+        }
+        currentTile = {
+          id: 'lava',
+          label: 'Lava',
+          isOre: false,
+          baseHits: 1,
+          img: IMAGE.lava,
+          baseCoins: 0,
+          minPickaxe: 0
+        };
+        currentHP = 1;
+        renderBlock();
+        dom.hpFill.style.width = '100%';
+        dom.block.style.backgroundImage = `url('${IMAGE.lava}')`;
+        dom.block.style.backgroundSize = 'cover';
+        dom.block.style.backgroundPosition = 'center';
+        dom.block.title = 'Lava! Cuidado!';
+        showToast('Lava apareceu! Cuidado ao minerar!');
+        dom.block.classList.add('lava');
+        setTimeout(() => {
+          dom.block.classList.remove('lava');
+          spawnTile();
+        }, 5000);
+        
+      }
+
+      dom.block.addEventListener('mousedown', e => e.preventDefault());
+
+      dom.block.addEventListener('click', function (e) {
+        if (currentTile.id === 'lava') {
+          const lose = Math.ceil(state.coins * 0.10);
+          state.coins = Math.max(0, state.coins - lose);
+          showToast('Queimou! Perdeu ' + lose + '⛃');
+          if (state.pickaxeIndex < 4 && Math.random() < 0.5) {
+            state.pickaxeIndex = 0;
+            showToast('Sua picareta quebrou!');
+          }
+          save();
+          spawnTile();
+          updateAll();
+          return;
+        }
+        currentHP -= 1;
+        state.clicks += 1;
+        spawnParticle(e.clientX, e.clientY, '⛏');
+        if (currentHP <= 0) {
+          if (currentTile.minPickaxe && state.pickaxeIndex < currentTile.minPickaxe) {
+            showToast('Picareta muito fraca — não coletou o bloco.');
+            spawnTile();
+            save();
+            updateAll();
+            return;
+          }
+          if (currentTile.id === 'obsidian') {
+            if (state.pickaxeIndex >= OBSIDIAN_MIN_PICKAXE_INDEX) {
+              state.inventory.obsidian = (state.inventory.obsidian || 0) + 1;
+              showToast('Obsidian coletada!');
+            } else {
+              showToast('Picareta muito fraca — obsidian não coletada.');
+            }
+            spawnTile();
+            save();
+            updateAll();
+            return;
+          }
+          if (currentTile.isOre && currentTile.baseCoins) {
+            state.coins += Math.round(currentTile.baseCoins * COIN_MULTIPLIER);
+            const fortuneChance = [0, 0.15, 0.30, 0.45][state.fortuneLevel] || 0;
+            if (Math.random() < fortuneChance) {
+              state.coins += 1;
+              showToast('Fortuna +1!');
+            }
+          }
+          if (currentTile.id && currentTile.id !== 'lava') {
+            state.inventory[currentTile.id] = (state.inventory[currentTile.id] || 0) + 1;
+          }
+          state.blockCount++;
+          if (state.blockCount >= 200 && Math.random() < 0.03) triggerLava();
+          else spawnTile();
+          save();
+        } else updateHpBar();
+        updateAll();
+      });
+
+      function spawnParticle(clientX, clientY, text) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.textContent = text;
+        const rect = dom.block.getBoundingClientRect();
+        p.style.left = (clientX - rect.left - 6) + 'px';
+        p.style.top = (clientY - rect.top - 6) + 'px';
+        dom.block.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+      }
+
+      function buildInventoryUI() {
+        dom.invGrid.innerHTML = '';
+        Object.entries(state.inventory).forEach(([key, qty]) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'inv-item';
+          if (['diamond', 'emerald', 'ancient'].includes(key)) {
+              wrapper.classList.add('rare');
+          }
+          wrapper.draggable = true;
+          wrapper.dataset.item = key;
+          const imgUrl = IMAGE[key] || '';
+          wrapper.innerHTML = `${imgUrl ? `<img src="${imgUrl}" alt="${key}" draggable="false">` : `<div style="font-weight:800">${key}</div>`}
+            <div style="font-weight:700;text-transform:capitalize">${key.replace('_', ' ')}</div>
+            <div class="inv-qty">${qty}x</div>`;
+          wrapper.addEventListener('dragstart', (ev) => {
+            ev.dataTransfer.setData('text/plain', key);
+            try { const img = wrapper.querySelector('img'); if (img) ev.dataTransfer.setDragImage(img, 24, 24); } catch (e) { }
+            wrapper.classList.add('dragging');
+          });
+          wrapper.addEventListener('dragend', () => wrapper.classList.remove('dragging'));
+          dom.invGrid.appendChild(wrapper);
+        });
+      }
+
+      function buildCraftGrid() {
+        const grid = document.getElementById('craftGrid');
+        grid.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'slot';
+          slot.dataset.index = i;
+          slot.dataset.item = '';
+          slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('over'); });
+          slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+          slot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            slot.classList.remove('over');
+            const item = e.dataTransfer.getData('text/plain');
+            if (!item) return;
+            if ((state.inventory[item] || 0) <= 0) { showToast('Você não tem esse item'); return; }
+            const prev = slot.dataset.item;
+            if (prev) { state.inventory[prev] = (state.inventory[prev] || 0) + 1; }
+            slot.dataset.item = item;
+            slot.innerHTML = renderSlotImage(item);
+            state.inventory[item] = (state.inventory[item] || 0) - 1;
+            buildInventoryUI();
+            updateCraftPreview();
+          });
+          slot.addEventListener('click', () => {
+            const prev = slot.dataset.item;
+            if (prev) {
+              state.inventory[prev] = (state.inventory[prev] || 0) + 1;
+              slot.dataset.item = '';
+              slot.innerHTML = '';
+              buildInventoryUI();
+              updateCraftPreview();
+            }
+          });
+          grid.appendChild(slot);
+        }
+        dom.craftGrid = grid;
+      }
+
+      function renderSlotImage(key) {
+        const url = IMAGE[key];
+        if (!url) return `<div style="font-weight:700">${key}</div>`;
+        return `<img src="${url}" alt="${key}" style="width:44px;height:44px;pointer-events:none"><div style="font-size:11px;color:var(--muted);margin-top:2px">${key.replace('_', ' ')}</div>`;
+      }
+
+      function validateCraft() {
+        if (!dom.craftGrid) return null;
+        const slots = [...dom.craftGrid.children].map(s => s.dataset.item || '');
+        if (!(slots[0] && slots[1] && slots[2])) return null;
+        if (!(slots[0] === slots[1] && slots[1] === slots[2])) return null;
+        if (slots[4] !== 'stick' || slots[7] !== 'stick') return null;
+        const top = slots[0];
+        if (!top) return null;
+        const mapping = {
+          stone: { pick: 'stone', needsIngot: false, requireKey: 'stone' },
+          diamond: { pick: 'diamond', needsIngot: false, requireKey: 'diamond' },
+          emerald: { pick: 'diamond', needsIngot: false, requireKey: 'emerald' },
+          iron_ingot: { pick: 'iron', needsIngot: true, requireKey: 'iron_ingot' },
+          gold_ingot: { pick: 'gold', needsIngot: true, requireKey: 'gold_ingot' },
+          ancient_ingot: { pick: 'netherite', needsIngot: true, requireKey: 'ancient_ingot' }
+        };
+        const entry = mapping[top];
+        if (!entry) {
+          if (top === 'iron' || top === 'gold' || top === 'ancient') {
+            showToast('Use ingots (smeltados) para craftar picaretas de ferro/ouro/netherite.');
+          }
+          return null;
+        }
+        if (slots[0] !== entry.requireKey) return null;
+        const licenseKey = 'license_' + entry.pick;
+        if (!state.purchased[licenseKey]) {
+          showToast('Você precisa comprar a licença da picareta "' + entry.pick + '" na Loja (Loja → Licenças).');
+          return null;
+        }
+        return entry.pick;
+      }
+
+      function updateCraftPreview() {
+        const pickId = validateCraft();
+        if (pickId) {
+          const p = PICKAXES.find(x => x.id === pickId);
+          dom.craftPreview.innerHTML = `<div style="font-weight:800">${p ? p.name : '—'}</div>`;
+          dom.craftBtn.disabled = false;
+        } else {
+          dom.craftPreview.textContent = '—';
+          dom.craftBtn.disabled = true;
+        }
+      }
+
+      dom.craftBtn.addEventListener('click', () => {
+        const pickId = validateCraft();
+        if (!pickId) { showToast('Receita inválida ou licença ausente'); return; }
+        const idx = PICKAXES.findIndex(p => p.id === pickId);
+        if (idx < 0) { showToast('Erro ao craftar'); return; }
+        [...dom.craftGrid.children].forEach(s => { s.dataset.item = ''; s.innerHTML = ''; });
+        state.pickaxeIndex = idx;
+        showToast('Craftado e equipado: ' + PICKAXES[idx].name);
+        dom.craftPreview.textContent = '—';
+        dom.craftBtn.disabled = true;
+        buildInventoryUI();
+        updateAll();
+        save();
+      });
+
+      const shopTabs = document.querySelectorAll('#shopTabs .tab');
+      shopTabs.forEach(tab => tab.addEventListener('click', () => {
+        shopTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderShop(tab.dataset.tab);
+      }));
+
+      function renderShop(tab = 'licenses') {
+        const content = document.getElementById('shopContent');
+        content.innerHTML = '';
+        if (tab === 'licenses') {
+          const grid = document.createElement('div');
+          grid.className = 'shop-grid';
+          PICKAXES.forEach((p) => {
+            if (p.id === 'wood') return;
+            const node = document.createElement('div');
+            node.className = 'shop-item';
+            const img = IMAGE[p.id] || '';
+            const licKey = 'license_' + p.id;
+            const owned = !!state.purchased[licKey];
+            node.innerHTML = `<div class="icon">${img ? `<img src="${img}" style="width:40px;height:40px">` : '📜'}</div>
+              <div style="flex:1"><div style="font-weight:800">${p.name} (Licença)</div>
+              <div class="sub">Preço: ${p.price}⛃ — permite craftar esta picareta</div></div>
+              <div>${owned ? '<div class="badge-owned">Licença</div>' : `<button class="btn btn-accent" data-buy-lic="${p.id}">Comprar • ${p.price}⛃</button>`}</div>`;
+            grid.appendChild(node);
+          });
+          content.appendChild(grid);
+          content.querySelectorAll('[data-buy-lic]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.buyLic;
+              const p = PICKAXES.find(x => x.id === id);
+              if (state.coins < p.price) { showToast('Sem moedas'); return; }
+              state.coins -= p.price;
+              state.purchased['license_' + id] = true;
+              showLicenseToast('Licença adquirida: ' + p.name);
+              save();
+              renderShop('licenses');
+              updateAll();
+            });
+          });
+        }     
+        if (tab === 'upgrades') {
+          const upgrades = document.createElement('div');
+          upgrades.innerHTML = `
+              <h3>Encantamentos de Picareta</h3>
+              <div>
+                  <div>Eficiência: Nível ${state.pickaxeEnchant.efficiency} <button id="upgradeEff" class="btn">+1 (50⛃)</button></div>
+                  <div>Fortuna: Nível ${state.pickaxeEnchant.fortune} <button id="upgradeFort" class="btn">+1 (80⛃)</button></div>
+              </div>
+          `;
+          content.appendChild(upgrades);
+          document.getElementById('upgradeEff').onclick = () => {
+              if (state.coins < 50) return showToast('Sem moedas');
+              state.coins -= 50;
+              state.pickaxeEnchant.efficiency++;
+              showToast('Eficiência aumentada!');
+              save();
+              renderShop('upgrades');
+              updateAll();
+          };
+          document.getElementById('upgradeFort').onclick = () => {
+              if (state.coins < 80) return showToast('Sem moedas');
+              state.coins -= 80;
+              state.pickaxeEnchant.fortune++;
+              showToast('Fortuna aumentada!');
+              save();
+              renderShop('upgrades');
+              updateAll();
+          };
+        } 
+        else if (tab === 'recipes') {
+          const recipes = [
+            { name: 'Picareta de Pedra', top: 'stone' },
+            { name: 'Picareta de Ferro', top: 'iron' },
+            { name: 'Picareta de Ouro', top: 'gold' },
+            { name: 'Picareta de Diamante', top: 'diamond' },
+            { name: 'Picareta Netherite', top: 'ancient' },
+            { name: 'Picareta de Esmeralda', top: 'emerald' }
+          ];
+          recipes.forEach(r => {
+            const box = document.createElement('div');
+            box.className = 'shop-item';
+            const img = IMAGE[r.top] || '';
+            const pickId = (r.top === 'ancient') ? 'netherite' : r.top;
+            const licKey = 'license_' + pickId;
+            const owned = !!state.purchased[licKey];
+            const price = PICKAXES.find(p => p.id === pickId)?.price || 0;
+            box.innerHTML = `<div class="icon">${img ? `<img src="${img}" style="width:40px;height:40px">` : '📜'}</div>
+              <div style="flex:1">
+                <div style="font-weight:800">${r.name}</div>
+                <div class="sub">Receita: 3x ${r.top} na linha superior + graveto (centro + abaixo)</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                ${owned ? `<div class="badge-owned">Licença comprada</div>` : `<button class="badge-buy" data-buy-recipe="${pickId}">Comprar licença • ${price}⛃</button>`}
+              </div>`;
+            content.appendChild(box);
+          });
+          content.querySelectorAll('[data-buy-recipe]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const pickId = btn.dataset.buyRecipe;
+              const p = PICKAXES.find(x => x.id === pickId);
+              if (state.coins < p.price) { showToast('Sem moedas'); return; }
+              state.coins -= p.price;
+              state.purchased['license_' + pickId] = true;
+              showLicenseToast('Licença adquirida: ' + p.name);
+              save();
+              renderShop('recipes');
+              updateAll();
+            });
+          });
+        } else if (tab === 'inventory') {
+          const wrap = document.createElement('div');
+          wrap.className = 'shop-grid';
+          Object.entries(state.inventory).forEach(([k, v]) => {
+            const n = document.createElement('div');
+            n.className = 'shop-item';
+            const img = IMAGE[k] || '';
+            n.innerHTML = `<div class="icon">${img ? `<img src="${img}" style="width:40px;height:40px">` : k[0].toUpperCase()}</div>
+              <div style="flex:1"><div style="font-weight:800">${k}</div><div class="sub">${v}x</div></div>`;
+            wrap.appendChild(n);
+          });
+          content.appendChild(wrap);
+        }
+      }
+
+      document.getElementById('buySticks').addEventListener('click', () => {
+        if (state.coins < 5) { showToast('Sem moedas'); return; }
+        state.coins -= 5;
+        state.inventory.stick = (state.inventory.stick || 0) + 4;
+        buildInventoryUI();
+        updateAll();
+        save();
+      });
+
+      function canUnlockLayer(layer) {
+    if (layer === 'mid') return state.blockCount >= 50;
+    if (layer === 'deep') return state.blockCount >= 150;
+    return true;
+}
+
+document.querySelectorAll('.layer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const layer = btn.dataset.layer;
+        if (!canUnlockLayer(layer)) {
+            showToast('Camada bloqueada! Minere mais blocos para desbloquear.');
+            return;
+        }
+        state.selectedLayer = layer;
+        document.querySelectorAll('.layer-btn').forEach(b => b.classList.toggle('active', b === btn));
+        showToast('Camada: ' + (layer === 'surface' ? 'Superfície' : layer === 'mid' ? 'Médio' : 'Profundo'));
+        spawnTile();
+        updateAll();
+        save();
     });
-  }
+});
 
-  function buildCraftGrid(){ const grid = document.getElementById('craftGrid'); grid.innerHTML = ''; for(let i=0;i<9;i++){ const slot = document.createElement('div'); slot.className='slot'; slot.dataset.index = i; slot.dataset.item=''; slot.addEventListener('dragover',(e)=>{ e.preventDefault(); slot.classList.add('over');}); slot.addEventListener('dragleave', ()=> slot.classList.remove('over')); slot.addEventListener('drop', (e)=>{ e.preventDefault(); slot.classList.remove('over'); const item = e.dataTransfer.getData('text/plain'); if(!item) return; if((state.inventory[item]||0) <= 0){ showToast('Você não tem esse item'); return; } const prev = slot.dataset.item; if(prev){ state.inventory[prev] = (state.inventory[prev]||0) + 1; } slot.dataset.item = item; slot.innerHTML = renderSlotImage(item); state.inventory[item] = (state.inventory[item]||0) - 1; buildInventoryUI(); updateCraftPreview(); }); slot.addEventListener('click', ()=>{ const prev = slot.dataset.item; if(prev){ state.inventory[prev] = (state.inventory[prev]||0) + 1; slot.dataset.item=''; slot.innerHTML=''; buildInventoryUI(); updateCraftPreview(); } }); grid.appendChild(slot);} dom.craftGrid = grid; }
+      document.getElementById('btnSave').addEventListener('click', () => { save(); showToast('Salvo'); });
+      document.getElementById('btnReset').addEventListener('click', () => { if (confirm('Resetar todo o progresso?')) { localStorage.removeItem(SAVE_KEY); location.reload(); } });
+      document.getElementById('openShop').addEventListener('click', () => { document.getElementById('shopPanel').style.display = 'block'; renderShop('licenses'); });
+      document.getElementById('shopToGame').addEventListener('click', () => { document.getElementById('shopPanel').style.display = 'none'; });
 
-  /* spawn / init / shop wiring */
-  function init(){ load(); if(!state.selectedLayer) state.selectedLayer='surface'; buildInventoryUI(); buildCraftGrid(); renderShop('licenses'); spawnTile(); updateAll(); setupFurnaceDrops(); setInterval(updateAll,700); }
-  init();
+      document.getElementById('openFurnace').addEventListener('click', () => {
+        dom.furnacePanel.style.display = dom.furnacePanel.style.display === 'block' ? 'none' : 'block';
+        renderFurnaceSlots();
+      });
+      document.getElementById('closeFurnace').addEventListener('click', () => dom.furnacePanel.style.display = 'none');
 
-  // shop / helpers re-used (renderShop etc.) - reuse functions defined earlier
-  // we already defined renderShop etc above; ensure functions are hoisted - (they are defined above)
-  // For safer organization, call renderShop to attach handlers
-  renderShop('licenses');
+      function setupFurnaceDrops() {
+        function acceptDrop(el, type) {
+          el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+          el.addEventListener('dragleave', () => el.classList.remove('over'));
+          el.addEventListener('drop', e => {
+            e.preventDefault();
+            el.classList.remove('over');
+            const item = e.dataTransfer.getData('text/plain');
+            if (!item) return;
+            if (type === 'input') {
+              if (!['iron', 'gold', 'ancient'].includes(item)) { showToast('Somente minério (iron/gold/ancient) no input'); return; }
+              if ((state.inventory[item] || 0) <= 0) { showToast('Você não tem esse item'); return; }
+              if (state.furnace.input && state.furnace.input.item !== item) { showToast('Input já contém outro minério. Retire primeiro.'); return; }
+              state.inventory[item] = (state.inventory[item] || 0) - 1;
+              if (!state.furnace.input) state.furnace.input = { item: item, qty: 0 };
+              state.furnace.input.qty += 1;
+              renderFurnaceSlots();
+              buildInventoryUI();
+              save();
+            }
+            if (type === 'fuel') {
+              if (item !== 'coal') { showToast('Apenas carvão serve como fuel'); return; }
+              if ((state.inventory[item] || 0) <= 0) { showToast('Você não tem carvão'); return; }
+              state.inventory[item] = (state.inventory[item] || 0) - 1;
+              state.furnace.fuel = (state.furnace.fuel || 0) + 1;
+              renderFurnaceSlots();
+              buildInventoryUI();
+              save();
+            }
+            if (type === 'output') {
+              if (!state.furnace.output) { showToast('Nada pronto'); return; }
+              const out = state.furnace.output;
+              state.inventory[out.item] = (state.inventory[out.item] || 0) + out.qty;
+              state.furnace.output = null;
+              renderFurnaceSlots();
+              buildInventoryUI();
+              save();
+            }
+          });
+        }
+        acceptDrop(dom.furnaceInput, 'input');
+        acceptDrop(dom.furnaceFuel, 'fuel');
+        acceptDrop(dom.furnaceOutput, 'output');
+      }
 
-})(); // fim IIFE
-</script>
+      function renderFurnaceSlots() {
+        if (state.furnace.input)
+          dom.furnaceInput.innerHTML = `<img src="${IMAGE[state.furnace.input.item]}" style="width:48px;height:48px;pointer-events:none"><div style="font-size:12px;color:var(--muted)">${state.furnace.input.qty}x</div>`;
+        else dom.furnaceInput.textContent = 'Input';
+        dom.fuelCount.textContent = state.furnace.fuel || 0;
+        dom.furnaceFuel.innerHTML = state.furnace.fuel ? `<img src="${IMAGE.coal}" style="width:48px;height:48px;pointer-events:none">` : 'Fuel';
+        if (state.furnace.output)
+          dom.furnaceOutput.innerHTML = `<img src="${IMAGE[state.furnace.output.item]}" style="width:48px;height:48px;pointer-events:none"><div style="font-size:12px;color:var(--muted);margin-top:6px">${state.furnace.output.qty}x</div>`;
+        else dom.furnaceOutput.textContent = 'Output';
+        const pct = state.furnace.isSmelting ? Math.min(100, (Date.now() - state.furnace.startedAt) / SMELT_TIME_MS * 100) : 0;
+        dom.furnaceProgress.style.width = pct + '%';
+      }
+
+      document.getElementById('startSmelt').addEventListener('click', () => {
+        state.furnace.auto = !state.furnace.auto;
+        if (state.furnace.auto) showToast('Fornalha: Auto ON');
+        else showToast('Fornalha: Auto OFF');
+        if (state.furnace.auto && !state.furnace.isSmelting) attemptStartSmelt();
+        renderFurnaceSlots();
+        save();
+      });
+
+      function attemptStartSmelt() {
+        if (state.furnace.isSmelting) return;
+        if (!state.furnace.input || state.furnace.input.qty <= 0) return;
+        if ((state.furnace.fuel || 0) <= 0) { showToast('Sem combustível'); return; }
+        state.furnace.fuel -= 1;
+        state.furnace.isSmelting = true;
+        state.furnace.startedAt = Date.now();
+        renderFurnaceSlots();
+        save();
+      }
+
+      setInterval(() => {
+        if (state.furnace.isSmelting) {
+          const elapsed = Date.now() - state.furnace.startedAt;
+          const pct = Math.min(100, elapsed / SMELT_TIME_MS * 100);
+          dom.furnaceProgress.style.width = pct + '%';
+          if (elapsed >= SMELT_TIME_MS) {
+            const input = state.furnace.input;
+            if (!input) {
+              state.furnace.isSmelting = false;
+              state.furnace.startedAt = 0;
+              renderFurnaceSlots();
+              save();
+              return;
+            }
+            const mapping = { iron: 'iron_ingot', gold: 'gold_ingot', ancient: 'ancient_ingot' };
+            const outItem = mapping[input.item] || null;
+            if (outItem) {
+              if (!state.furnace.output) state.furnace.output = { item: outItem, qty: 0 };
+              state.furnace.output.qty += 1;
+            } else {
+              state.inventory[input.item] = (state.inventory[input.item] || 0) + 1;
+            }
+            input.qty -= 1;
+            if (input.qty <= 0) state.furnace.input = null;
+            state.furnace.isSmelting = false;
+            state.furnace.startedAt = 0;
+            renderFurnaceSlots();
+            buildInventoryUI();
+            save();
+            if (state.furnace.auto && state.furnace.input && state.furnace.input.qty > 0 && (state.furnace.fuel || 0) > 0) attemptStartSmelt();
+          }
+        } else {
+          if (state.furnace.auto && state.furnace.input && state.furnace.input.qty > 0 && (state.furnace.fuel || 0) > 0) attemptStartSmelt();
+        }
+      }, 400);
+
+      dom.furnaceOutput.addEventListener('click', () => {
+        if (!state.furnace.output) { showToast('Nada pronto'); return; }
+        const out = state.furnace.output;
+        state.inventory[out.item] = (state.inventory[out.item] || 0) + out.qty;
+        state.furnace.output = null;
+        renderFurnaceSlots();
+        buildInventoryUI();
+        save();
+      });
+
+      function updateAll() {
+        dom.statClicks.textContent = fmt(state.clicks);
+        dom.statCoins.textContent = fmt(state.coins);
+        dom.pickaxeLabel.textContent = 'Picareta: ' + PICKAXES[state.pickaxeIndex].name;
+        dom.fortuneLabel.textContent = 'Fortuna: ' + (state.fortuneLevel * 15) + '%';
+        dom.speedLabel.textContent = 'Velocidade: x' + (1 - state.speedTotal).toFixed(2);
+        buildInventoryUI();
+        updateHpBar();
+        updateCraftPreview();
+        renderFurnaceSlots();
+      }
+
+      function buildInventoryUI() {
+        dom.invGrid.innerHTML = '';
+        Object.entries(state.inventory).forEach(([key, qty]) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'inv-item';
+          if (['diamond', 'emerald', 'ancient'].includes(key)) {
+              wrapper.classList.add('rare');
+          }
+          wrapper.draggable = true;
+          wrapper.dataset.item = key;
+          const imgUrl = IMAGE[key] || '';
+          wrapper.innerHTML = `${imgUrl ? `<img src="${imgUrl}" alt="${key}" draggable="false">` : `<div style="font-weight:800">${key}</div>`}
+            <div style="font-weight:700;text-transform:capitalize">${key.replace('_', ' ')}</div>
+            <div class="inv-qty">${qty}x</div>`;
+          wrapper.addEventListener('dragstart', (ev) => {
+            ev.dataTransfer.setData('text/plain', key);
+            try { const img = wrapper.querySelector('img'); if (img) ev.dataTransfer.setDragImage(img, 24, 24); } catch (e) { }
+            wrapper.classList.add('dragging');
+          });
+          wrapper.addEventListener('dragend', () => wrapper.classList.remove('dragging'));
+          dom.invGrid.appendChild(wrapper);
+        });
+      }
+
+      function buildCraftGrid() {
+        const grid = document.getElementById('craftGrid');
+        grid.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'slot';
+          slot.dataset.index = i;
+          slot.dataset.item = '';
+          slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('over'); });
+          slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+          slot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            slot.classList.remove('over');
+            const item = e.dataTransfer.getData('text/plain');
+            if (!item) return;
+            if ((state.inventory[item] || 0) <= 0) { showToast('Você não tem esse item'); return; }
+            const prev = slot.dataset.item;
+            if (prev) { state.inventory[prev] = (state.inventory[prev] || 0) + 1; }
+            slot.dataset.item = item;
+            slot.innerHTML = renderSlotImage(item);
+            state.inventory[item] = (state.inventory[item] || 0) - 1;
+            buildInventoryUI();
+            updateCraftPreview();
+          });
+          slot.addEventListener('click', () => {
+            const prev = slot.dataset.item;
+            if (prev) {
+              state.inventory[prev] = (state.inventory[prev] || 0) + 1;
+              slot.dataset.item = '';
+              slot.innerHTML = '';
+              buildInventoryUI();
+              updateCraftPreview();
+            }
+          });
+          grid.appendChild(slot);
+        }
+        dom.craftGrid = grid;
+      }
+
+      function init() {
+        load();
+        if (!state.selectedLayer) state.selectedLayer = 'surface';
+        buildInventoryUI();
+        buildCraftGrid();
+        renderShop('licenses');
+        spawnTile();
+        updateAll();
+        setupFurnaceDrops();
+        setInterval(updateAll, 700);
+      }
+      init();
+      renderShop('licenses');
+    })();
+  </script>
 </body>
 </html>
